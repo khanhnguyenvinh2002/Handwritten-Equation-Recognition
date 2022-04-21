@@ -81,7 +81,14 @@ def predictint():
             # print brules[predint[0]]
             nf.write("%s\t%s\n" %(f,brules[predint[0]]))
             ins = f.split('.')[0].split('_')
-            if brules[predint[0]] == ins[3]:
+            label = ins[3]
+            if ins[3] == "o":
+                label = "0"
+            if ins[3] == "frac" or ins[3] == "bar":
+                label = "-"
+            if ins[3] == "mul":
+                label = "x"
+            if brules[predint[0]] == label:
                 hit = hit +1
             else:
                 nnfile.write("%s\t%s\n" %(f,brules[predint[0]]))
@@ -89,8 +96,8 @@ def predictint():
                 # print f, (predint[0]) #first value in list
         nf.close()
 
-        print( "see result is in result.txt")
-        print( "Accuracy is ", (hit/float(number)))
+        print ("see result is in result.txt")
+        print ("Accuracy is ", (hit/float(number)))
 
 # def imageprepare(argv):
 #     im = Image.open(argv).convert('L')

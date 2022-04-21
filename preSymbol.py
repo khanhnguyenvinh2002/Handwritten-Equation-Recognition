@@ -18,21 +18,24 @@ for i in range(0,len(sy)):
     lst[i] = float(0)
 # print rules
 #later we can do some merge rules: 0 and o, frac and bar and -, x and mul
-#rules['o'] = rules['0']
-#rules['frac'] = rules['-']
-#rules['bar'] = rules['-']
-#rules['x'] = rules['mul']
+rules['o'] = rules['0']
+rules['frac'] = rules['-']
+rules['bar'] = rules['-']
+rules['mul'] = rules['x']
 
 pp = pprint.PrettyPrinter(indent=4)
-dataroot = os.getcwd() + "/data/annotated/"
+dataroot = os.getcwd() + "/data/annotated_train/"
 symbol_test = {}
 images_test = {}
+images_test2D = {}
 data_test = {} #store symbol and images dic
 symbol_train = {}
 images_train = {}
+images_train2D = {}
 data_train = {} #store symbol and images dic
 symbol = {}
 images = {}
+images2D = {}
 data = {} #store symbol and images dic
 
 def processImage(image_name):
@@ -69,7 +72,7 @@ def processImage(image_name):
     # newImage.save("./annotated_28x28/"+tail, quality=100)
     tv = list(newImage.getdata())
     tva = [x * 1.0/255.0 for x in tv]
-    return tva
+    return tva, newImage
 
 def marklabel(f):
    ins = f.split('.')[0].split('_')
@@ -80,10 +83,13 @@ def marklabel(f):
          if decider >= 3:
              symbol_train[f] = rules[ins[3]]
              symbol[f] = symbol_train[f]
-             image = processImage(f)
+             image, im = processImage(f)
             #  image = np.reshape(image, (784))
+             images_train2D[f] = im
              images_train[f] = image
              images[f] = images_train[f]
+             images2D[f] = images_train2D[f]
+
          else:
              symbol_test[f] = rules[ins[3]]
              symbol[f] = symbol_test[f]
@@ -93,10 +99,12 @@ def marklabel(f):
             #     'size':im.size,
             #     'mode':im.mode
             #  }
-             image = processImage(f)
+             image,im = processImage(f)
             #  image = np.reshape(image, (784))
              images_test[f] = image
+             images_test2D[f] = im
              images[f] = images_test[f]
+             images2D[f] = images_test2D[f]
 
 def main():
 
@@ -109,10 +117,13 @@ def main():
     # print total
     # print (set(symbol.values()))
     data_train["images"] = images_train
+    data_train["images2D"] = images_train2D
     data_train["labels"] = symbol_train
     data_test["images"] = images_test
+    data_test["images2D"] = images_test2D
     data_test["labels"] = symbol_test
     data["images"] = images
+    data["images2D"] = images2D
     data["labels"] = symbol
 
     pfile = open('train.pkl','wb')

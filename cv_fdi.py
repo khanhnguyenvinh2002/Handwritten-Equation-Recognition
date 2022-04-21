@@ -1,24 +1,13 @@
-from PIL import Image
+import PIL.ImageOps
+import numpy as np
 import cv2
+import glob
+import os
+
+from PIL import Image, ImageDraw
 
 # clipt image into box using OpenCV
 
-'''
-equation = (yh - y) / (xw - x) < 0.2 and (yh1 - y1) / (xw1 - x1) < 0.2 and abs(x1 - x) < 20
-division = (abs(x1 - x) < min(abs(xw - x) / 2, abs(xw1 - x1) / 2)
-                and abs(y1 - yh) < max(abs(yh - y) / 2, abs(yh1 - y1) / 2)
-                and (yh - y) / (xw - x) > 0.5 and (yh1 - y1) / (xw1 - x1) > 0.5)
-letterI = (((yh - y) / (xw - x) > 5 and (yh1 - y1) / (xw1 - x1) < 2)
-               or ((yh - y) / (xw - x) < 2 and (yh1 - y1) / (xw1 - x1) > 5) and abs(x1 - x) < 2)
-divisionMark = False
-if i < len(res) - 2:
-    (x2, y2), (xw2, yh2) = res[i + 2]
-    divisionMark = ((yh - y) / (xw - x) < 0.2 and 0.7 < (yh1 - y1) / (xw1 - x1) < 1.3
-                    and 0.7 < (yh2 - y2) / (xw2 - x2) < 1.3 and x < x1 < x2 < xw and max(y1, y2) > y
-                    and min(y1, y2) < y and max(y1, y2) - min(y1, y2) < 1.2 * abs(xw - x))
-'''
-
-# 下一步进一步优化要用TA给的大小尺寸
 # TA input size: 1696 * 117
 # pm  - not tried
 # isFraction  - not updated
@@ -70,15 +59,14 @@ def isDots(boundingBox, boundingBox1, boundingBox2):
     (x, y), (xw, yh) = boundingBox
     (x1, y1), (xw1, yh1) = boundingBox1
     (x2, y2), (xw2, yh2) = boundingBox2
-    return (isDot(boundingBox) and isDot(boundingBox1) and isDot(boundingBox2)
-            and abs(max(yh, yh1, yh2, y, y1, y2) - min(yh, yh1, yh2, y, y1, y2)) < 20)  # 20 is a migical number
+    return (isDot(boundingBox) and isDot(boundingBox1) and isDot(boundingBox2) and abs(max(yh, yh1, yh2, y, y1, y2) - min(yh, yh1, yh2, y, y1, y2)) < 20)  # 20 is a migical number
 
 # return raw bounding boxes of input image
 def rawBoundingBoxes(im):
-    '''input: image; return: raw rectangles'''
+    '''input: image; return: raw rectangles as list'''
     imgrey = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
     ret, thresh = cv2.threshold(imgrey, 127, 255, 0)
-    temp, contours, hierachy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    temp, contours, hierachy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     res = []
     for cnt in contours:
         x,y,w,h = cv2.boundingRect(cnt)
@@ -97,7 +85,7 @@ def connect(im, res):
         print([(x, y), (xw, yh)], [(x1, y1), (xw1, yh1)])
 
         equation = isEquationMark(res[i],  res[i + 1])
-        # this one needs to refind, and use isSquare()
+        # this one needs to refine, and use isSquare()
         division = (abs(x1 - x) < min(abs(xw - x) / 2, abs(xw1 - x1) / 2)
                     and abs(y1 - yh) < max(abs(yh - y) / 2, abs(yh1 - y1) / 2)
                     and (yh - y) / (xw - x) > 0.5 and (yh1 - y1) / (xw1 - x1) > 0.5)
@@ -130,21 +118,76 @@ def connect(im, res):
 
     return finalRes
 
-# draw boxes on image
+# draw bounding boxes on image
 def drawBoxes(im, boxes):
     ''' draw boxes on im'''
     for (left, right) in boxes:
         print([left, right])
         cv2.rectangle(im, left, right, (0,255,0), 2)
 
+# remove noises of input image
+def removeNoise(im):
+    '''remove noises of input image; return: None'''
+
+# return initial bounding boxes of input image
+def initialBoxes(im):
+    '''input: image; return: None'''
+    # create grey image for retrieving contours
+    # convert the image into white and black image
+    im[im >= 127] = 255
+    im[im < 127] = 0
+    # set the morphology kernel size, the number in tuple is the bold pixel size
+    kernel = np.ones((4,4),np.uint8)
+    im = cv2.morphologyEx(im, cv2.MORPH_CLOSE, kernel)
+    # create grey image for retrieving contours
+    imgrey = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+    ret, thresh = cv2.threshold(imgrey, 127, 255, 0)
+    contours, hierachy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE) # RETR_EXTERNAL for only bounding outer box
+    # bounding rectangle outside the individual element in image
+    res = []
+    for cnt in contours:
+        x,y,w,h = cv2.boundingRect(cnt)
+        # exclude the whole size image and noisy point
+        if x == 0: continue
+        if w*h < 25: continue
+        res.append([(x,y), (x+w, y+h)])
+    return res
+
+
+def saveImages(im, boxes):
+    # make a tmpelate image for next crop
+    image = Image.fromarray(im)
+    num = 1
+    boxes = sorted(boxes, key=lambda box: (box[1][1]-box[0][1]) * (box[1][0]-box[0][0]))
+    for box in boxes:
+        (x, y), (xw, yh) = box
+        x -= 1
+        y -= 1
+        xw += 1
+        yh += 1
+        # save rectangled element
+        symbolImage = image.crop((x, y, xw, yh))
+        symbolImage.save("./testResults/" + "test" + "_" + str(num) + "_" + str(y) + "_" + str(yh) + "_" + str(x) + "_" + str(xw) + ".png")
+        # fill the found part with black to reduce effect to other crop
+        draw = ImageDraw.Draw(image)
+        draw.rectangle((x, y, xw, yh), fill = 'black')
+        # draw rectangle around element in image for confirming result
+        cv2.rectangle(im, (x,y), (xw, yh), (0,255,0), 2)
+        num = num + 1
+
 # run the code
 def main():
-    im = cv2.imread("./test_1.png")  # specify the image to process
-    rawRes = rawBoundingBoxes(im)
-    finalRes = connect(im, rawRes)
-    drawBoxes(im, finalRes)
-    Image.fromarray(im).show()  # show image
-    #result.save("test.png")
+    image_list = glob.glob("./test-images/*.*")
+    for im_name in image_list:
+        im = cv2.imread(im_name)  # specify the image to process
+        rawRes =  initialBoxes(im)  # raw bounding boxes
+        finalRes = connect(im, rawRes)  # connect i, division mark, equation mark, ellipsis
+        drawBoxes(im, finalRes)  # draw finalRes on im for debug
+        result = Image.fromarray(im)  # show image
+        head, tail = os.path.split(im_name)
+        result.save("./testResult/" + tail)
+        #saveImages(im, finalRes)
+        #Image.fromarray(im).show()  # show image
 
 if __name__ == "__main__":
     main()
