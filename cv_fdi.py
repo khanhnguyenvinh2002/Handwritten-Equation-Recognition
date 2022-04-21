@@ -1,7 +1,7 @@
 from PIL import Image
 import cv2
 
-# clip image into box using OpenCV
+# clipt image into box using OpenCV
 
 '''
 equation = (yh - y) / (xw - x) < 0.2 and (yh1 - y1) / (xw1 - x1) < 0.2 and abs(x1 - x) < 20
@@ -11,7 +11,6 @@ division = (abs(x1 - x) < min(abs(xw - x) / 2, abs(xw1 - x1) / 2)
 letterI = (((yh - y) / (xw - x) > 5 and (yh1 - y1) / (xw1 - x1) < 2)
                or ((yh - y) / (xw - x) < 2 and (yh1 - y1) / (xw1 - x1) > 5) and abs(x1 - x) < 2)
 divisionMark = False
-
 if i < len(res) - 2:
     (x2, y2), (xw2, yh2) = res[i + 2]
     divisionMark = ((yh - y) / (xw - x) < 0.2 and 0.7 < (yh1 - y1) / (xw1 - x1) < 1.3
