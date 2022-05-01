@@ -6,32 +6,32 @@ import os
 from PIL import Image, ImageDraw
 import PIL.ImageOps
 
-# for i in range(1, 1):
-name = "./training/0184.png"
-im = cv2.imread(name)
-head, tail = os.path.split(name)
-# convert the image into white and black image
-# print(tail)
-im = cv2.bitwise_not(im)
-# im[im >= 30] = 255
-# im[im < 30] = 0
+for i in range(1,10):
+    name = "./training/069"+str(i)+".png"
+    im = cv2.imread(name)
+    head, tail = os.path.split(name)
+    # convert the image into white and black image
+    # print(tail)
+    im = cv2.bitwise_not(im)
+    # im[im >= 30] = 255
+    # im[im < 30] = 0
 
-# set the morphology kernel size, the number in tuple is the bold pixel size
-kernel = np.ones((2,2),np.uint8)
-im = cv2.morphologyEx(im, cv2.MORPH_CLOSE, kernel)
+    # set the morphology kernel size, the number in tuple is the bold pixel size
+    kernel = np.ones((2,2),np.uint8)
+    im = cv2.morphologyEx(im, cv2.MORPH_CLOSE, kernel)
 
-kernel = np.ones((2,2),np.uint8)
-im = cv2.dilate(im, kernel, iterations =1)
-# make a tmpelate image for next crop
-# convert the image into white and black image
-im[im >= 150] = 255
-im[im < 150] = 0
+    kernel = np.ones((2,2),np.uint8)
+    im = cv2.dilate(im, kernel, iterations =1) 
+    # make a tmpelate image for next crop
+    # convert the image into white and black image
+    im[im >= 127] = 255
+    im[im < 127] = 0
 
-# kernel = np.ones((3,3),np.uint8)
-# im = cv2.dilate(im, kernel, iterations =1)
-# set the morphology kernel size, the number in tuple is the bold pixel size
+    # kernel = np.ones((3,3),np.uint8)
+    # im = cv2.dilate(im, kernel, iterations =1)
+    # set the morphology kernel size, the number in tuple is the bold pixel size
 
 
-# make a tmpelate image for next crop
-image = Image.fromarray(im)
-image.save("./testResults/" + os.path.splitext(tail)[0] +".png")
+    # make a tmpelate image for next crop
+    image = Image.fromarray(im)
+    image.save("./testResults/" + os.path.splitext(tail)[0] +".png")
