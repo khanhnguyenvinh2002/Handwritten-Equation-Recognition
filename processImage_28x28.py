@@ -3,7 +3,7 @@ import cv2
 import os
 from PIL import Image, ImageFilter
 
-image_list = glob.glob("data/annotated/*.*")
+image_list = glob.glob("./train-symbol/*.png")
 
 for image_name in image_list:
     im = cv2.imread(image_name)
@@ -16,6 +16,10 @@ for image_name in image_list:
     width = float(image.size[0])
     height = float(image.size[1])
     newImage = Image.new('L', (28, 28), (0))
+
+
+
+    # newImage = Image.new('RGBA', (28, 28), (255, 255, 255, 255))
 
     if width > height: #check which dimension is bigger
         #Width is bigger. Width becomes 20 pixels.

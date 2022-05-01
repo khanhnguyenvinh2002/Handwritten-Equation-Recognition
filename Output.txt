@@ -1,2 +1,0 @@
-filename: t2.png	stroke number: 8
-filename: t3.png	stroke number: 10
