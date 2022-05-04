@@ -7,7 +7,7 @@ from PIL import Image, ImageDraw
 import PIL.ImageOps
 
 for i in range(0,10):
-    name = "./training/085"+str(9)+".png"
+    name = "./training/069"+str(0)+".png"
     im = cv2.imread(name)
     head, tail = os.path.split(name)
     # convert the image into white and black image
@@ -35,4 +35,4 @@ for i in range(0,10):
 
     # make a tmpelate image for next crop
     image = Image.fromarray(im)
-    image.save("./testResults/" + os.path.splitext(tail)[0] +".png")
+    image.save("./processed/" + os.path.splitext(tail)[0] +".png")

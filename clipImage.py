@@ -7,7 +7,7 @@ from PIL import Image, ImageDraw
 import PIL.ImageOps
 # Image.MAX_IMAGE_PIXELS = 10000020000000 
 
-image_list = glob.glob("./training/*.png")
+image_list = glob.glob("./processed/*.png")
 text_file = open("Output.txt", "w")
 #   im = Image.open(im_name)
     # head, tail = os.path.split(im_name)
@@ -26,8 +26,8 @@ for im_name in image_list:
     im = cv2.imread(im_name)
     head, tail = os.path.split(im_name)
     # convert the image into white and black image
-    print(im.getpixel((0,0)))
-    im = cv2.bitwise_not(im)   
+    # print(im.getpixel((0,0)))
+    # im = cv2.bitwise_not(im)   
     # im[im >= 127] = 255
     # im[im < 127] = 0
 
@@ -59,15 +59,15 @@ for im_name in image_list:
         
         # fill the found part with black to reduce effect to other crop
         draw = ImageDraw.Draw(image)
-        # draw.rectangle((x, y, x+w, y+h), fill = 'black')
+        draw.rectangle((x, y, x+w, y+h), fill = 'black')
         
         # draw rectangle around element in image for confirming result
         cv2.rectangle(im, (x,y), (x+w, y+h), (0,255,0), 2)
         num = num + 1
     
    
-    image.save("./testResults/" + os.path.splitext(tail)[0] +".png")
-    # save bouding result
+    # image.save("./testResults/" + os.path.splitext(tail)[0] +".png")
+    # # save bouding result
     image = Image.fromarray(im)   
     image.save("./old-res/boudingResult_" + tail)
     
